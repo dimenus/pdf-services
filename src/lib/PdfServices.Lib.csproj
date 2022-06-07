@@ -11,6 +11,10 @@
         <Link>libmupdf.so</Link>
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <Content Include="..\..\third-party\zig-mupdf\zig-out\lib\libzmupdf.so">
+        <Link>libzmupdf.so</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>

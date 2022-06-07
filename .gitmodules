@@ -1,3 +1,6 @@
 [submodule "third-party/mupdf"]
 	path = third-party/mupdf
 	url = https://github.com/ArtifexSoftware/mupdf
+[submodule "third-party/zig-mupdf"]
+	path = third-party/zig-mupdf
+	url = https://github.com/dimenus/zig-mupdf

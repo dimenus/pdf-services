@@ -19,7 +19,7 @@ public static class MuPdfLib
         }
         if (s_contextExists)
             throw new NotImplementedException($"calling {nameof(CreateContext)} multiple times is not supported yet.");
-        var new_context = Helpers.ValidateNonNull(NativeMethods.CreateContext());
+        var new_context = Helpers.ValidateNonNull(MuPdfNativeMethods.CreateContext());
         s_contextExists = true;
         s_createLock = 0;
         return new MuPdfContext(new_context);
@@ -70,7 +70,7 @@ public class MuPdfContext : IDisposable
     public void Dispose()
     {
         Reset();
-        NativeMethods.DropContext(_fzContext);
+        MuPdfNativeMethods.DropContext(_fzContext);
     }
 
     public void OpenBatch(int capacity = DEFAULT_BUFFER_CAPACITY)
@@ -88,13 +88,13 @@ public class MuPdfContext : IDisposable
         
         fixed (byte* ptr = &MemoryMarshal.GetReference<byte>(fileBytes)) {
             var buf_handle = Helpers.ValidateNonNull(
-                NativeMethods.CreateBufferWithData(_fzContext, ptr, (nuint) fileBytes.Length));
+                MuPdfNativeMethods.CreateBufferWithData(_fzContext, ptr, (nuint) fileBytes.Length));
 
             var stream_handle = Helpers.ValidateNonNull(
-                NativeMethods.CreateStreamFromBuffer(_fzContext, buf_handle));
+                MuPdfNativeMethods.CreateStreamFromBuffer(_fzContext, buf_handle));
 
             var pdf_handle = Helpers.ValidateNonNull(
-                NativeMethods.CreatePdfHandleFromStream(_fzContext, stream_handle));
+                MuPdfNativeMethods.CreatePdfHandleFromStream(_fzContext, stream_handle));
             
             _mappedPdfList.Add(new MappedPdf(buf_handle, stream_handle, pdf_handle));
             _totalBatchSize += fileBytes.Length;
@@ -107,21 +107,21 @@ public class MuPdfContext : IDisposable
             throw new InvalidOperationException($"can't finalize batch in '{_state}' state");
 
         var fz_output = Helpers.ValidateNonNull(
-            NativeMethods.CreatePdfHandle(_fzContext));
+            MuPdfNativeMethods.CreatePdfHandle(_fzContext));
 
         var num_pages = 0;
 
         _state = ContextState.FinalizedBatch;
         
-        NativeMethods.DropPdfHandle(_fzContext, fz_output);
+        MuPdfNativeMethods.DropPdfHandle(_fzContext, fz_output);
     }
 
     public void Reset()
     {
         foreach (var item in _mappedPdfList) {
-            NativeMethods.DropPdfHandle(_fzContext, item.PdfHandle);
-            NativeMethods.DropStream(_fzContext, item.StreamHandle);
-            NativeMethods.DropBuffer(_fzContext, item.BufferHandle);
+            MuPdfNativeMethods.DropPdfHandle(_fzContext, item.PdfHandle);
+            MuPdfNativeMethods.DropStream(_fzContext, item.StreamHandle);
+            MuPdfNativeMethods.DropBuffer(_fzContext, item.BufferHandle);
         }
         
         _mappedPdfList.Clear();
