@@ -7,14 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Include="..\..\third-party\mupdf\build\shared-debug\libmupdf.so">
-        <Link>libmupdf.so</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
       <Content Include="..\..\third-party\zig-mupdf\zig-out\lib\libzmupdf.so">
         <Link>libzmupdf.so</Link>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Syncfusion.Pdf.Net.Core" Version="20.1.0.59" />
     </ItemGroup>
 
 </Project>
