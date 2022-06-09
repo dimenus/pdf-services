@@ -29,62 +29,64 @@ namespace PdfServices.Tests
             _mLibContext.Dispose();
         }
         
-        [TestCase(new [] { "samples/combineFilesInput1.pdf", "samples/combineFilesInput2.pdf"}, "output")]
-        public void CreateOutput(string[] inputFiles, string outputPath)
+        [TestCase("samples/combineFilesInput1.pdf", "samples/combineFilesInput2.pdf")]
+        [TestCase(
+            "samples/combineFilesInput1.pdf",
+            "samples/combineFilesInput2.pdf",
+            "samples/combineFilesInput1.pdf"
+        )]
+        public void MuPdfCreateOutput(params string[] inputFiles)
         {
             var stopwatch = Stopwatch.StartNew();
             _mLibContext.OpenOutput();
             foreach (var item in inputFiles) {
-                //Get Input Index from Lib
-                //Graft 
-                AddSampleFile(item);
+                var pdf_handle = _mLibContext.OpenInput(item);
+                _mLibContext.CopyPagesToOutput(pdf_handle);
+                _mLibContext.DropInput(pdf_handle);
             }
-            var returned_bytes = _mLibContext.CombineOutput();
+            _mLibContext.SaveOutput("outputs/mupdf_output.pdf");
+            _mLibContext.DropOutput();
+            
             var memory_diff = Process.GetCurrentProcess().PeakWorkingSet64 - _workingSet;
             Console.WriteLine($"working_set_diff ({memory_diff:N0}), processing time => {stopwatch.Elapsed}");
-
-            using var sw = File.Open("outputs/samples.pdf", FileMode.Create);
-            sw.Write(returned_bytes);
-            sw.Flush();
-            sw.Close();
-            _mLibContext.DropOutput();
         }
         
         [Test]
-        public void CreateLargeOutput()
+        public void MuPdfCreateLargeOutput()
         {
             var stopwatch = Stopwatch.StartNew();
             _mLibContext.OpenOutput();
             foreach (var item in Directory.GetFiles("samples/", "*.pdf")) {
-                AddSampleFile(item);
+                var pdf_handle = _mLibContext.OpenInput(item);
+                _mLibContext.CopyPagesToOutput(pdf_handle);
+                _mLibContext.DropInput(pdf_handle);
             }
-            var returned_bytes = _mLibContext.CombineOutput();
+            _mLibContext.SaveOutput("outputs/mupdf_large_output.pdf");
+            _mLibContext.DropOutput();
+            
             var memory_diff = Process.GetCurrentProcess().PeakWorkingSet64 - _workingSet;
             Console.WriteLine($"working_set_diff ({memory_diff:N0}), processing time => {stopwatch.Elapsed}");
-            
-            using var sw = File.Open("outputs/large_sample.pdf", FileMode.Create);
-            sw.Write(returned_bytes);
-            sw.Flush();
-            sw.Close();
-            _mLibContext.DropOutput();
         }
         
         [Test]
-        public void CreatePartialOutput()
+        public void MuPdfCreatePartialOutput()
         {
             var stopwatch = Stopwatch.StartNew();
             _mLibContext.OpenOutput();
-            AddPartialSampleFile("samples/combineFilesInput1.pdf", 2, 2);
-            AddSampleFile("samples/combineFilesInput2.pdf");
-            var returned_bytes = _mLibContext.CombineOutput();
+            
+            var first_pdf = _mLibContext.OpenInput("samples/combineFilesInput1.pdf");
+            _mLibContext.CopyPagesToOutput(first_pdf, 2, 2);
+            _mLibContext.DropInput(first_pdf);
+
+            var second_pdf = _mLibContext.OpenInput("samples/combineFilesInput2.pdf");
+            _mLibContext.CopyPagesToOutput(first_pdf, 0, 4);
+            _mLibContext.DropInput(second_pdf);
+            
+            _mLibContext.SaveOutput("outputs/mupdf_partial_samples.pdf");
+            _mLibContext.DropOutput();
+            
             var memory_diff = Process.GetCurrentProcess().PeakWorkingSet64 - _workingSet;
             Console.WriteLine($"working_set_diff ({memory_diff:N0}), processing time => {stopwatch.Elapsed}");
-            
-            using var sw = File.Open("outputs/partial_samples.pdf", FileMode.Create);
-            sw.Write(returned_bytes);
-            sw.Flush();
-            sw.Close();
-            _mLibContext.DropOutput();
         }
 
         [TestCase("samples/combineFilesInput1.pdf", "samples/combineFilesInput2.pdf")]
@@ -107,9 +109,8 @@ namespace PdfServices.Tests
             
             var memory_diff = Process.GetCurrentProcess().PeakWorkingSet64 - _workingSet;
             Console.WriteLine($"working_set_diff ({memory_diff:N0}), processing time => {stopwatch.Elapsed}");
-            using var output_stream = new FileStream("outputs/sync_fusion_sample.pdf", FileMode.Create);
+            using var output_stream = new FileStream("outputs/sf_output.pdf", FileMode.Create);
             output_doc.Save(output_stream);
-            output_stream.Flush();
         }
 
         [Test]
@@ -119,30 +120,23 @@ namespace PdfServices.Tests
             using var output_doc = new PdfDocument();
 
             var file_list = Directory.GetFiles("samples/", "*.pdf");
+            var list_file_streams = new List<FileStream>(file_list.Length);
             foreach (var item in file_list) {
-                var file_bytes = File.ReadAllBytes(item);
-                var loaded_doc = new PdfLoadedDocument(file_bytes);
+                var file_stream = File.Open(item, FileMode.Open);
+                var loaded_doc = new PdfLoadedDocument(file_stream);
                 PdfDocumentBase.Merge(output_doc, loaded_doc);
                 loaded_doc.Close();
+                list_file_streams.Add(file_stream);
             }
 
             var memory_diff = Process.GetCurrentProcess().PeakWorkingSet64 - _workingSet;
             Console.WriteLine($"working_set_diff ({memory_diff:N0}), processing time => {stopwatch.Elapsed}");
-            using var output_stream = new FileStream("outputs/sync_fusion_sample.pdf", FileMode.Create);
+            using var output_stream = new FileStream("outputs/sf_large_output.pdf", FileMode.Create);
             output_doc.Save(output_stream);
-            output_stream.Flush();
-        }
-
-        private void AddSampleFile(string filePath)
-        {
-            var file_bytes = File.ReadAllBytes(filePath);
-            _mLibContext.AddToOutput(file_bytes);
-        }
-
-        private void AddPartialSampleFile(string filePath, int pageIndex, int length)
-        {
-            var file_bytes = File.ReadAllBytes(filePath);
-            _mLibContext.AddPartialToOutput(file_bytes, pageIndex, length);
+            output_doc.Close();
+            foreach (var item in list_file_streams) {
+                item.Close();
+            }
         }
     }
 }

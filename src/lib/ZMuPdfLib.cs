@@ -1,32 +1,17 @@
 using System;
-using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.IO;
+using System.Text;
 
 namespace PdfServices.Lib;
 
 public class ZMuPdfLib : IDisposable
 {
-    private record BufferMemory
-    {
-        public IMemoryOwner<byte> Owner = null!;
-        public MemoryHandle Handle;
-
-        public void Destroy()
-        {
-            Handle.Dispose();
-            Owner.Dispose();
-        }
-    }
-
     private readonly IntPtr _mRawContext;
-    private readonly List<BufferMemory> _sourceBufferList;
 
     private ZMuPdfLib(IntPtr ctx)
     {
         _mRawContext = ctx;
-        _sourceBufferList = new List<BufferMemory>(2048);
     }
     public static ZMuPdfLib Create()
     {
@@ -43,70 +28,58 @@ public class ZMuPdfLib : IDisposable
     public void DropOutput()
     {
         ZMuPdfNativeMethods.DropOutput(_mRawContext);
-        foreach (var item in _sourceBufferList) {
-            item.Destroy();
-        }
-        _sourceBufferList.Clear();
     }
 
-    public void AddToOutput(Span<byte> fileBytes)
+    public uint OpenInput(string filePath)
     {
-        if (fileBytes.Length == 0)
-            throw new ArgumentException($"{nameof(fileBytes)} must have length > 0");
-
-        var owned_mem = MemoryPool<byte>.Shared.Rent(fileBytes.Length);
-        fileBytes.CopyTo(owned_mem.Memory.Span);
-        var mem_handle = owned_mem.Memory.Pin();
-        try {
-            unsafe {
-                CheckErrorState(ZMuPdfNativeMethods.AddToOutput(_mRawContext, (byte*) mem_handle.Pointer,
-                    (uint) fileBytes.Length));
-            }
-        } catch {
-            mem_handle.Dispose();
-        }
-
-        _sourceBufferList.Add(new BufferMemory {
-            Handle = mem_handle,
-            Owner = owned_mem,
-        });
-    }
-
-    public void AddPartialToOutput(Span<byte> fileBytes, int firstPageIndex, int length)
-    {
+        if (!File.Exists(filePath)) throw new FileNotFoundException(message: null, fileName: filePath);
+        var file_path = Encoding.UTF8.GetBytes(filePath).AsSpan();
         unsafe {
-            if (fileBytes.Length == 0) 
-                throw new ArgumentException($"{nameof(fileBytes)} must have length > 0");
-            
-            fixed (byte* ptr = &MemoryMarshal.GetReference(fileBytes)) {
-                CheckErrorState(ZMuPdfNativeMethods.AddSelectedToOutput(_mRawContext, ptr, (uint) fileBytes.Length, 
-                    firstPageIndex, length));
+            uint input_handle = 0;
+            fixed (byte* ptr = file_path) {
+                CheckErrorState(ZMuPdfNativeMethods.OpenInputPath(_mRawContext, ptr, (uint)file_path.Length, &input_handle));
             }
+            return input_handle;
         }
     }
 
-    public Span<byte> CombineOutput()
+    public void DropInput(uint inputHandle)
     {
-        var req_size = ZMuPdfNativeMethods.OutputGetMaxSize(_mRawContext);
-        var output_buffer = new byte[req_size].AsSpan();
-        output_buffer[0] = 4;
+        CheckErrorState(ZMuPdfNativeMethods.DropInput(_mRawContext, inputHandle));
+    }
 
+    public void CopyPagesToOutput(uint inputHandle, int offset, int length)
+    {
+        CheckErrorState(ZMuPdfNativeMethods.CopyPagesToOutput(_mRawContext, inputHandle, offset, length));
+    }
+
+    public void CopyPagesToOutput(uint inputHandle)
+    {
+        uint num_pages = 0;
         unsafe {
-            fixed (byte* ptr = &MemoryMarshal.GetReference(output_buffer)) {
-                CheckErrorState(ZMuPdfNativeMethods.CombineOutputIntoBuffer(_mRawContext, ptr, &req_size, null, 0));
+            CheckErrorState(ZMuPdfNativeMethods.GetInputPageCount(_mRawContext, inputHandle, &num_pages));
+        }
+        CopyPagesToOutput(inputHandle, 0, (int)num_pages);
+    }
+
+    public void SaveOutput(string filePath)
+    {
+        if (File.Exists(filePath)) File.Delete(filePath);
+        var file_path = Encoding.UTF8.GetBytes(filePath).AsSpan();
+        unsafe {
+            fixed (byte* ptr = file_path) {
+                CheckErrorState(ZMuPdfNativeMethods.SaveOutput(_mRawContext, ptr, (uint)file_path.Length));
             }
         }
-        
-        return output_buffer[..(int)req_size];
     }
-    
+
     public void Dispose()
     {
         DropOutput();
         ZMuPdfNativeMethods.DestroyContext(_mRawContext);
     }
 
-    private void CheckErrorState(ZMuPdfNativeMethods.ErrorCode ec)
+    private static void CheckErrorState(ZMuPdfNativeMethods.ErrorCode ec)
     {
         if (ec != ZMuPdfNativeMethods.ErrorCode.None)
             throw new Exception($"received '{ec}' ErrorCode");
