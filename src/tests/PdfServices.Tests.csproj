@@ -13,6 +13,7 @@
     <ItemGroup>
         <PackageReference Include="JetBrains.dotMemoryUnit" Version="3.2.20220510" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <PackageReference Include="NUnit" Version="3.13.1" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
         <PackageReference Include="coverlet.collector" Version="3.0.2" />
@@ -30,22 +31,13 @@
       <None Update="samples\combineFilesInput2.pdf">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="samples\foo.json">
+      <None Update="samples\Workview_FEP5.pdf">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
       <None Update="samples\Workflow_FEP5.pdf">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="samples\Workview_FEP5.pdf">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="samples\DocImage_FEP5.pdf">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="samples\RepDashboards_FEP5.pdf">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="samples\SysAdmin_FEP5.pdf">
+      <None Update="samples\MRMUnity_FEP5.pdf">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>

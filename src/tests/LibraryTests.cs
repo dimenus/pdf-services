@@ -99,6 +99,7 @@ namespace PdfServices.Tests
         {
             var stopwatch = Stopwatch.StartNew();
             using var output_doc = new PdfDocument();
+            //output_doc.EnableMemoryOptimization = true;
             
             foreach (var input_file in inputs) {
                 var file_bytes = File.ReadAllBytes(input_file);
