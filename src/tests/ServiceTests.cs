@@ -33,7 +33,7 @@ public class ServiceTests
         _httpClient.Dispose();
     }
     
-    [Test]
+    [TestCase("samples/foobar.pdf")]
     [TestCase("samples/combineFilesInput2.pdf")]
     [TestCase("samples/Workflow_FEP5.pdf")]
     [TestCase("samples/Workview_FEP5.pdf")]
