@@ -14,13 +14,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Models" />
       <Folder Include="setup" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="storage.db">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+      <ProjectReference Include="..\lib\PdfServices.Lib.csproj" />
     </ItemGroup>
 
 </Project>

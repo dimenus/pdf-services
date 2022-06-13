@@ -3,25 +3,20 @@ using System.Net.Http;
 namespace PdfServices.Tests;
 
 using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using NUnit.Framework;
-using PdfServices.Lib;
-using Syncfusion.Pdf;
-using Syncfusion.Pdf.Parsing;
 
 public class ServiceTests
 {
-    private static HttpClient _httpClient;
+#pragma warning disable CS8618
+    private HttpClient _httpClient;
+#pragma warning restore CS8618
     
     [SetUp]
     public void Setup()
     {
         var handler = new HttpClientHandler();
         handler.ClientCertificateOptions = ClientCertificateOption.Manual;
-        handler.ServerCertificateCustomValidationCallback = (httpRequestMessage, cert, cetChain, policyErrors) => true;
+        handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
         _httpClient = new HttpClient(handler);
         _httpClient.BaseAddress = new Uri("https://localhost:7212");
         _ = _httpClient.GetAsync("/health").Result;
@@ -33,10 +28,10 @@ public class ServiceTests
         _httpClient.Dispose();
     }
     
-    [TestCase("samples/foobar.pdf")]
+    [TestCase("samples/combineFilesInput1.pdf")]
     [TestCase("samples/combineFilesInput2.pdf")]
     [TestCase("samples/Workflow_FEP5.pdf")]
-    [TestCase("samples/Workview_FEP5.pdf")]
+    [TestCase("samples/WorkView_FEP5.pdf")]
     [TestCase("samples/MRMUnity_FEP5.pdf")]
     public void UploadSingleFile(string filePath)
     {

@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using PdfServices.Lib;
+using PdfServices.Service.Services;
 using PdfServices.Service.Utils;
 
 namespace JsonMappingBuilder;
@@ -34,6 +36,8 @@ internal static class Program
             opts.Audience = audience;
         });
 
+        builder.Services.AddHostedService<LocalStorageService>();
+        builder.Services.AddScoped<ZMuPdfLib>();
         builder.Services.AddSingleton<SqliteDbContext>();
         builder.Services.AddControllers();
 

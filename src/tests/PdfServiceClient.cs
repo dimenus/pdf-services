@@ -3,18 +3,16 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Runtime.Intrinsics.Arm;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace PdfServices.Tests;
 
+[SuppressMessage("ReSharper", "CollectionNeverUpdated.Global")]
 public class PdfServiceClient
 {
     private const string HEALTH_ENDPOINT = "/health";
@@ -53,7 +51,6 @@ public class PdfServiceClient
     public PdfServiceClient(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        //_ = _httpClient.GetAsync("/health").Result;
     }
 
     public void UploadPdf(string filePath)
@@ -62,7 +59,6 @@ public class PdfServiceClient
         if (!file_info.Exists) throw new FileNotFoundException(filePath);
         using var file_stream = new FileStream(file_info.FullName, FileMode.Open, FileAccess.Read);
         var byte_buffer = ArrayPool<byte>.Shared.Rent((int)file_info.Length);
-        var list_chunk_buffers = new List<byte[]>(64);
         try {
             var num_bytes_read = file_stream.Read(byte_buffer.AsSpan());
             if (num_bytes_read != file_info.Length) {
@@ -70,7 +66,7 @@ public class PdfServiceClient
                     $"expected FileStream position to be ({file_info.Length}) but instead got ({file_stream.Position})");
             }
             using var hash = SHA256.Create();
-            var raw_hash = hash.ComputeHash(byte_buffer);
+            var raw_hash = hash.ComputeHash(byte_buffer[0..num_bytes_read]);
             var sb_hash = new StringBuilder(raw_hash.Length * 2);
             foreach (var b in raw_hash) sb_hash.Append(b.ToString("X2")); 
             var input_payload = new PdfInputPayload {
@@ -92,7 +88,13 @@ public class PdfServiceClient
                     new ByteArrayContent(byte_buffer, base_byte_index, chunk.SizeInBytes)));
                 base_byte_index += chunk.SizeInBytes;
             }
-            _ = Task.WhenAll(list_tasks).Result;
+            var results = Task.WhenAll(list_tasks).Result;
+            foreach (var item in results) {
+                if (!item.IsSuccessStatusCode) {
+                    var resp_data = item.Content.ReadAsStringAsync().Result;
+                    throw new Exception(resp_data);
+                }
+            }
         } finally {
             ArrayPool<byte>.Shared.Return(byte_buffer);
         }
