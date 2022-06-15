@@ -13,11 +13,9 @@
     <ItemGroup>
         <PackageReference Include="JetBrains.dotMemoryUnit" Version="3.2.20220510" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <PackageReference Include="NUnit" Version="3.13.1" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
         <PackageReference Include="coverlet.collector" Version="3.0.2" />
-        <PackageReference Include="Syncfusion.Pdf.Net.Core" Version="20.1.0.59" />
     </ItemGroup>
 
     <ItemGroup>
@@ -25,19 +23,28 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="samples\combineFilesInput1.pdf">
+      <None Update="samples\0_warmup.pdf">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="samples\combineFilesInput2.pdf">
+      <None Update="samples\1_single_chunk.pdf">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="samples\WorkView_FEP5.pdf">
+      <None Update="samples\2_multi_chunk.pdf">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="samples\Workflow_FEP5.pdf">
+      <None Update="samples\3_multi_chunk.pdf">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="samples\MRMUnity_FEP5.pdf">
+      <None Update="samples\4_multi_chunk.pdf">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="samples\5_multi_chunk.pdf">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="samples\6_multi_chunk.pdf">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="samples\7_multi_chunk.pdf">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>

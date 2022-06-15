@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 
 namespace PdfServices.Tests;
@@ -28,14 +30,27 @@ public class ServiceTests
         _httpClient.Dispose();
     }
     
-    [TestCase("samples/combineFilesInput1.pdf")]
-    [TestCase("samples/combineFilesInput2.pdf")]
-    [TestCase("samples/Workflow_FEP5.pdf")]
-    [TestCase("samples/WorkView_FEP5.pdf")]
-    [TestCase("samples/MRMUnity_FEP5.pdf")]
+    [TestCase("samples/0_warmup.pdf")]
+    [TestCase("samples/1_single_chunk.pdf")]
+    [TestCase("samples/2_multi_chunk.pdf")]
     public void UploadSingleFile(string filePath)
     {
         var client = new PdfServiceClient(_httpClient);
         client.UploadPdf(filePath);
+    }
+
+    [TestCase("samples/0_warmup.pdf")]
+    [TestCase("samples/1_single_chunk.pdf")]
+    [TestCase("samples/2_multi_chunk.pdf")]
+    [TestCase("samples/3_multi_chunk.pdf")]
+    public void SelectFirstPage(string filePath)
+    {
+        var client = new PdfServiceClient(_httpClient);
+        var pdf_obj = client.UploadPdf(filePath).Result;
+        var page_bytes = client.GetPdfPage(pdf_obj.Id, 1).Result;
+        var file_info = new FileInfo(filePath);
+        Directory.CreateDirectory("outputs");
+        File.WriteAllBytes(Path.Combine("outputs", file_info.Name), page_bytes);
+
     }
 }
